@@ -128,10 +128,6 @@ ifeq ($(BLESONITE_BUILD_WITH_DOCKER),)
     BLESONITE_BUILD_WITH_DOCKER := $(call YESNO,Do you want to build the Blue.dll with docker? (Press N if unsure) (Y/N):)
     $(file >$(VARS)/BLESONITE_BUILD_WITH_DOCKER,$(BLESONITE_BUILD_WITH_DOCKER))
 
-    ifeq ($(BLESONITE_BUILD_WITH_DOCKER),1)
-        dummy := $(shell podman cp $(BLESONITE_HEADLESS) netcontainer:/home/ubuntu/Blesonite/Headless)
-    endif
-
 endif
 
 all: Blue
@@ -139,23 +135,26 @@ all: Blue
 
 ifeq ($(BLESONITE_BUILD_WITH_DOCKER),1)
 	
-    $(BLESONITE_PATH)/Dockerfile: $(BLESONITE_PATH)/Dockerfile.template
-		sed 's/$$BLESONITE_HEADLESS/$(call SANITIZE,$(BLESONITE_HEADLESS))/g' $(BLESONITE_PATH)/Dockerfile.template > $(BLESONITE_PATH)/Dockerfile
+    $(BLESONITE_PATH)/src/Blue/Blue.csproj: src/Blue/Blue.csprojtemplate
+		sed 's/$$BLESONITE_HEADLESS/$(call SANITIZE,/home/ubuntu/Blesonite/Headless)/g' $(BLESONITE_PATH)/src/Blue/Blue.csprojtemplate > $(BLESONITE_PATH)/src/Blue/Blue.csproj
 
     Blue: $(BLESONITE_PATH)/src/Blue/Blue.csproj $(BLESONITE_PATH)/src/Blue/Blue.cs $(BLESONITE_PATH)/Dockerfile
-	podman build -t netcontainer --output=$(BLESONITE_PATH) $(BLESONITE_PATH)
-	cp ./Blue.dll $(BLESONITE_HEADLESS)/Blue.dll
+		rm -rf $(BLESONITE_HEADLESS)/Blue.dll
+		podman build -t netcontainer --build-context=Headless=$(BLESONITE_HEADLESS) --output=$(BLESONITE_PATH) $(BLESONITE_PATH)
+		cp ./Blue.dll $(BLESONITE_HEADLESS)/
 else
 
     Blue: $(BLESONITE_PATH)/src/Blue/Blue.csproj $(BLESONITE_PATH)/src/Blue/Blue.cs
-    	cd $(BLESONITE_PATH)/src/Blue; dotnet build
+		cd $(BLESONITE_PATH)/src/Blue; dotnet build
+
+    $(BLESONITE_PATH)/src/Blue/Blue.csproj: src/Blue/Blue.csprojtemplate
+		sed 's/$$BLESONITE_HEADLESS/$(call SANITIZE,$(BLESONITE_HEADLESS))/g' $(BLESONITE_PATH)/src/Blue/Blue.csprojtemplate > $(BLESONITE_PATH)/src/Blue/Blue.csproj
 
 endif
 
 
 
-$(BLESONITE_PATH)/src/Blue/Blue.csproj: src/Blue/Blue.csprojtemplate
-	sed 's/$$BLESONITE_HEADLESS/$(call SANITIZE,$(BLESONITE_HEADLESS))/g' $(BLESONITE_PATH)/src/Blue/Blue.csprojtemplate > $(BLESONITE_PATH)/src/Blue/Blue.csproj
+
 
 
 
