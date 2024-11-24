@@ -1,2 +1,6 @@
-blender
+blender*
 vars
+Dockerfile
+src/Blue/Blue.csproj
+src/Blue/bin
+src/Blue/obj

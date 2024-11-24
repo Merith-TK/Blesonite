@@ -83,8 +83,7 @@ ifeq ($(DO_INSTALL_BLENDER),1)
     dummy := $(shell unzip $(BLESONITE_BLENDER_IDENTIFIER).zip -d $(BLESONITE_BLENDER_PATH)/unpacked/)
     dummy := $(shell rm $(BLESONITE_BLENDER_IDENTIFIER).zip)
     dummy := $(shell mv $(BLESONITE_BLENDER_PATH)/unpacked/$(BLESONITE_BLENDER_IDENTIFIER)/* $(BLESONITE_BLENDER_PATH)/)
-    dummy := $(shell rm $(BLESONITE_BLENDER_PATH)/unpacked/$(BLESONITE_BLENDER_IDENTIFIER))
-    dummy := $(shell rm $(BLESONITE_BLENDER_PATH)/unpacked)
+    dummy := $(shell rm -rf $(BLESONITE_BLENDER_PATH)/unpacked)
 
     $(file >$(VARS)/BLESONITE_BLENDER_PATH,$(BLESONITE_BLENDER_PATH))
 
@@ -123,13 +122,42 @@ ifeq ($(BLESONITE_HEADLESS),)
 
 endif
 
+BLESONITE_BUILD_WITH_DOCKER := $(shell cat $(VARS)/BLESONITE_BUILD_WITH_DOCKER)
+ifeq ($(BLESONITE_BUILD_WITH_DOCKER),)
+
+    BLESONITE_BUILD_WITH_DOCKER := $(call YESNO,Do you want to build the Blue.dll with docker? (Press N if unsure) (Y/N):)
+    $(file >$(VARS)/BLESONITE_BUILD_WITH_DOCKER,$(BLESONITE_BUILD_WITH_DOCKER))
+
+    ifeq ($(BLESONITE_BUILD_WITH_DOCKER),1)
+        dummy := $(shell podman cp $(BLESONITE_HEADLESS) netcontainer:/home/ubuntu/Blesonite/Headless)
+    endif
+
+endif
+
+all: Blue
+
+
+ifeq ($(BLESONITE_BUILD_WITH_DOCKER),1)
+	
+    $(BLESONITE_PATH)/Dockerfile: $(BLESONITE_PATH)/Dockerfile.template
+		sed 's/$$BLESONITE_HEADLESS/$(call SANITIZE,$(BLESONITE_HEADLESS))/g' $(BLESONITE_PATH)/Dockerfile.template > $(BLESONITE_PATH)/Dockerfile
+
+    Blue: $(BLESONITE_PATH)/src/Blue/Blue.csproj $(BLESONITE_PATH)/src/Blue/Blue.cs $(BLESONITE_PATH)/Dockerfile
+	podman build -t netcontainer --output=$(BLESONITE_PATH) $(BLESONITE_PATH)
+	cp ./Blue.dll $(BLESONITE_HEADLESS)/Blue.dll
+else
+
+    Blue: $(BLESONITE_PATH)/src/Blue/Blue.csproj $(BLESONITE_PATH)/src/Blue/Blue.cs
+    	cd $(BLESONITE_PATH)/src/Blue; dotnet build
+
+endif
+
+
+
 $(BLESONITE_PATH)/src/Blue/Blue.csproj: src/Blue/Blue.csprojtemplate
 	sed 's/$$BLESONITE_HEADLESS/$(call SANITIZE,$(BLESONITE_HEADLESS))/g' $(BLESONITE_PATH)/src/Blue/Blue.csprojtemplate > $(BLESONITE_PATH)/src/Blue/Blue.csproj
 
-Blue: $(BLESONITE_PATH)/src/Blue/Blue.csproj $(BLESONITE_PATH)/src/Blue/Blue.cs
-	cd $(BLESONITE_PATH)/src/Blue; dotnet build
 
-all: Blue
 
 clean:
 	rm -rf $(VARS)
