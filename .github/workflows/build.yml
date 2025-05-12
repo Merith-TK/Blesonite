@@ -1,0 +1,51 @@
+name: Build Blue.dll
+
+on:
+  push:
+    branches: [ rebuild-action ]
+  pull_request:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      STEAM_USER: ${{ secrets.STEAM_USER }}
+      STEAM_PASS: ${{ secrets.STEAM_PASS }}
+      RESONITE_HEADLESS_KEY: ${{ secrets.RESONITE_HEADLESS_KEY }}
+
+    steps:
+
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Download Resonite Headless
+      run: bash scripts/download-resonite.sh
+
+    - name: Prepare Blue.csproj
+      run: |
+        sed 's|\$BLESONITE_HEADLESS|../../dependencies|g' src/Blue/Blue.csprojtemplate > src/Blue/Blue.csproj
+
+    - name: Build Blue.cs
+      run: |
+        dotnet build src/Blue/Blue.csproj --configuration Release
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Blue.dll
+        path: src/Blue/bin/Release/net8.0/Blue.dll
+
+    - name: Create GitHub Release
+      if: github.ref == 'refs/heads/main'
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v${{ github.run_number }}
+        name: Release v${{ github.run_number }}
+        files: src/Blue/bin/Release/net8.0/Blue.dll
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
