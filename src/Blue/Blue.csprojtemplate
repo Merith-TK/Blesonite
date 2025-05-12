@@ -8,16 +8,16 @@
 
 	<ItemGroup>
 		<Reference Include="FrooxEngine">
-			<HintPath>$BLESONITE_HEADLESS/FrooxEngine.dll</HintPath>
+			<HintPath>../../dependencies/resonite/Headless/FrooxEngine.dll</HintPath>
 		</Reference>
 		<Reference Include="Elements.Core">
-			<HintPath>$BLESONITE_HEADLESS/Elements.Core.dll</HintPath>
+			<HintPath>../../dependencies/resonite/Headless/Elements.Core.dll</HintPath>
 		</Reference>
 		<Reference Include="SkyFrost.Base">
-			<HintPath>$BLESONITE_HEADLESS/SkyFrost.Base.dll</HintPath>
+			<HintPath>../../dependencies/resonite/Headless/SkyFrost.Base.dll</HintPath>
 		</Reference>
 		<Reference Include="SkyFrost.Base.Models">
-			<HintPath>$BLESONITE_HEADLESS/SkyFrost.Base.Models.dll</HintPath>
+			<HintPath>../../dependencies/resonite/Headless/SkyFrost.Base.Models.dll</HintPath>
 		</Reference>
 	</ItemGroup>
 
