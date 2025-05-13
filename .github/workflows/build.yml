@@ -48,11 +48,6 @@ jobs:
       run: |
         mkdir -p src/Python/blue_blender_addon
         cp src/Blue/bin/Release/net8.0/Blue.dll src/Python/blue_blender_addon/
-    
-    - name: Zip Blender Addon
-      run: |
-        cd src/Python
-        zip -r blue_blender_addon.zip blue_blender_addon
 
     - name: Upload Blue.dll Artifact
       uses: actions/upload-artifact@v4
@@ -64,7 +59,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: blue_blender_addon.zip
-        path: src/Python/blue_blender_addon.zip
+        path: src/Python/blue_blender_addon
 
     - name: Create GitHub Release
       if: github.ref == 'refs/heads/main'
