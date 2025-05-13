@@ -23,7 +23,17 @@ jobs:
       with:
         dotnet-version: '8.0.x'
 
+    - name: Cache Resonite installation
+      id: cache-resonite
+      uses: actions/cache@v4
+      with:
+        path: dependencies/resonite
+        key: resonite-${{ runner.os }}-headless-${{ hashFiles('scripts/download-resonite.sh') }}
+        restore-keys: |
+          resonite-${{ runner.os }}-headless-
+
     - name: Download Resonite Headless
+      if: steps.cache-resonite.outputs.cache-hit != 'true'
       run: bash scripts/download-resonite.sh
 
     - name: Prepare Blue.csproj
