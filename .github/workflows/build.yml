@@ -59,7 +59,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: blue_blender_addon.zip
-        path: src/Python/blue_blender_addon
+        path: src/Python/
 
     - name: Create GitHub Release
       if: github.ref == 'refs/heads/main'
