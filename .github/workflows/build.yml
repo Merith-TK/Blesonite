@@ -1,9 +1,10 @@
-name: Build Blue.dll
+name: Build Blue.dll and Blender Addon
 
 on:
   push:
-    branches: [ rebuild-action ]
+    branches: [ update-build ]
   pull_request:
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -14,7 +15,6 @@ jobs:
       RESONITE_HEADLESS_KEY: ${{ secrets.RESONITE_HEADLESS_KEY }}
 
     steps:
-
     - name: Checkout repo
       uses: actions/checkout@v4
 
@@ -34,11 +34,27 @@ jobs:
       run: |
         dotnet build src/Blue/Blue.csproj --configuration Release
 
-    - name: Upload Artifact
+    - name: Copy DLL into Blender Addon
+      run: |
+        mkdir -p src/Python/blue_blender_addon
+        cp src/Blue/bin/Release/net8.0/Blue.dll src/Python/blue_blender_addon/
+
+    - name: Zip Blender Addon
+      run: |
+        cd src/Python
+        zip -r blessonite-blender.zip blue_blender_addon
+
+    - name: Upload Blue.dll Artifact
       uses: actions/upload-artifact@v4
       with:
         name: Blue.dll
         path: src/Blue/bin/Release/net8.0/Blue.dll
+
+    - name: Upload Blender Addon ZIP
+      uses: actions/upload-artifact@v4
+      with:
+        name: blue_blender_addon.zip
+        path: src/Python/blessonite-blender.zip
 
     - name: Create GitHub Release
       if: github.ref == 'refs/heads/main'
@@ -46,6 +62,8 @@ jobs:
       with:
         tag_name: v${{ github.run_number }}
         name: Release v${{ github.run_number }}
-        files: src/Blue/bin/Release/net8.0/Blue.dll
+        files: |
+          src/Blue/bin/Release/net8.0/Blue.dll
+          src/Python/blessonite-blender.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
