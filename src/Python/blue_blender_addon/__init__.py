@@ -4,13 +4,33 @@ bl_info = {
     "category": "Development",
     "author": "Merith, wav3",
     "version": (1, 0, 0),
-    "description": "Runs Resonite in Blender",
+    "description": "Runs Resonite in Blender using Blue.dll",
 }
 
 import bpy
 import os
+import sys
+import subprocess
+import importlib.util
+
+def ensure_pythonnet():
+    try:
+        import pythonnet
+        return True
+    except ImportError:
+        try:
+            import ensurepip
+            ensurepip.bootstrap()
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "pythonnet"])
+            return True
+        except Exception as e:
+            print(f"❌ Failed to install pythonnet: {e}")
+            return False
 
 def load_blue_dll():
+    if not ensure_pythonnet():
+        return
+
     try:
         from pythonnet import load
         load("coreclr")
@@ -20,7 +40,10 @@ def load_blue_dll():
 
         addon_dir = os.path.dirname(__file__)
         dll_path = os.path.join(addon_dir, "Blue.dll")
+        if not os.path.exists(dll_path):
+            raise FileNotFoundError(f"Blue.dll not found at {dll_path}")
         Directory.SetCurrentDirectory(addon_dir)
+
         asm = Assembly.LoadFrom(dll_path)
         runner_type = asm.GetType("Blue.FrooxEngineRunner", True)
         instance = clr.System.Activator.CreateInstance(runner_type)
@@ -41,8 +64,11 @@ def menu_func(self, context):
 
 def register():
     bpy.utils.register_class(BLUE_OT_Load)
-    bpy.types.TOPBAR_MT_app_system.append(menu_func)
+    bpy.types.TEXT_MT_text.append(menu_func)  # Works in Blender 4.0+
 
 def unregister():
-    bpy.types.TOPBAR_MT_app_system.remove(menu_func)
+    bpy.types.TEXT_MT_text.remove(menu_func)
     bpy.utils.unregister_class(BLUE_OT_Load)
+
+if __name__ == "__main__":
+    register()
